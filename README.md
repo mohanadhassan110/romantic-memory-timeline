@@ -3,6 +3,9 @@
 > تطبيق ويب رومانسي فاخر وتفاعلي مصمم كهدية رقمية تُفتح عبر بطاقة ذكية (NFC Card / Tag) لتوثيق رحلة حب استثنائية.
 > A romantic, luxury digital memory timeline designed as an NFC gift for anniversaries and special moments.
 
+**🌐 رابط الموقع المباشر (Live Site):** [https://mohamed-main.vercel.app](https://mohamed-main.vercel.app)  
+**📦 مستودع GitHub:** [https://github.com/mohanadhassan110/romantic-memory-timeline](https://github.com/mohanadhassan110/romantic-memory-timeline)
+
 ---
 
 ## 🌟 مميزات المشروع (Key Features)
