@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+@theme {
+  --font-arabic: "IBM Plex Sans Arabic", "Tajawal", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-amiri: "Amiri", "Playfair Display", Georgia, serif;
+  --font-tajawal: "Tajawal", system-ui, sans-serif;
+  --font-serif: "Playfair Display", "Amiri", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", "IBM Plex Sans Arabic", system-ui, sans-serif;
+
+  --color-romantic-cream: #FAF7F2;
+  --color-romantic-ivory: #FFFDF9;
+  --color-romantic-warm: #F4ECE1;
+  --color-romantic-rose-light: #FBECEE;
+  --color-romantic-rose: #E28290;
+  --color-romantic-rose-deep: #C2415C;
+  --color-romantic-burgundy: #7C2335;
+  --color-romantic-wine: #561623;
+  --color-romantic-terracotta: #D97762;
+  --color-romantic-gold: #D4AF37;
+  --color-romantic-gold-light: #F6ECC4;
+  --color-romantic-dark: #272021;
+  --color-romantic-muted: #786C6E;
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background-color: #FAF7F2;
+  color: #272021;
+  font-family: var(--font-arabic);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.8;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Font Helper Utilities */
+.font-arabic {
+  font-family: var(--font-arabic);
+}
+
+.font-amiri {
+  font-family: var(--font-amiri);
+}
+
+.font-tajawal {
+  font-family: var(--font-tajawal);
+}
+
+/* BiDi Plaintext Helper for Mixed Arabic-English strings */
+.bidi-plain {
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+
+/* Glassmorphism & Romantic Glow Utilities */
+.glass-card {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(244, 219, 222, 0.7);
+  box-shadow: 0 10px 30px -10px rgba(194, 65, 92, 0.07),
+              0 2px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.glass-card-hover {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(226, 130, 144, 0.7);
+  box-shadow: 0 20px 40px -12px rgba(194, 65, 92, 0.14),
+              0 8px 16px -4px rgba(212, 175, 55, 0.08);
+}
+
+.glass-nav {
+  background: rgba(250, 247, 242, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226, 130, 144, 0.2);
+}
+
+.glass-modal {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 130, 144, 0.4);
+}
+
+.glow-rose {
+  box-shadow: 0 0 25px rgba(226, 130, 144, 0.35);
+}
+
+.glow-gold {
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.35);
+}
+
+.text-gradient-rose {
+  background: linear-gradient(135deg, #7C2335 0%, #C2415C 50%, #D97762 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #A8811E 0%, #D4AF37 50%, #E5C365 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom Romantic Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF7F2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E28290;
+  border-radius: 9999px;
+  border: 2px solid #FAF7F2;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C2415C;
+}
+
+/* Subtle Pulsing Animations */
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+
+.animate-float {
+  animation: floatGentle 6s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
