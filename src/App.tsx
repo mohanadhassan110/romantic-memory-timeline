@@ -16,6 +16,8 @@ export function App() {
   const {
     memories,
     settings,
+    isBackendConnected,
+    refreshFromBackend,
     cloudStatus,
     syncToCloudNow,
     addMemory,
@@ -111,6 +113,8 @@ export function App() {
         <AdminDashboard
           memories={memories}
           settings={settings}
+          isBackendConnected={isBackendConnected}
+          onRefreshFromBackend={refreshFromBackend}
           cloudStatus={cloudStatus}
           onSyncToCloud={syncToCloudNow}
           onAddMemory={addMemory}

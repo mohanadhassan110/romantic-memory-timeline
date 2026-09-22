@@ -1,7 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { INITIAL_MEMORIES, INITIAL_SETTINGS } from '../data/initialMemories';
 import type { CoupleSettings, Memory } from '../types/memory';
 import { getStorageItem, setStorageItem } from '../utils/storage';
+import {
+  fetchLaravelTimeline,
+  createLaravelMemory,
+  updateLaravelMemory,
+  deleteLaravelMemory,
+  clearAllLaravelMemories,
+  updateLaravelSettings,
+  resetLaravelTimeline,
+  checkLaravelHealth,
+} from '../services/laravelApi';
 import {
   isFirebaseConfigured,
   subscribeToCloudTimeline,
@@ -15,6 +25,8 @@ const INITIALIZED_STORAGE_KEY = 'moments_of_us_initialized_v2';
 export function useMemories() {
   const [isHydrated, setIsHydrated] = useState(false);
   const isHydratedRef = useRef(false);
+  const [isBackendConnected, setIsBackendConnected] = useState(false);
+
   const [cloudStatus, setCloudStatus] = useState<
     'connected' | 'syncing' | 'unconfigured' | 'error'
   >(() => (isFirebaseConfigured() ? 'connected' : 'unconfigured'));
@@ -49,12 +61,37 @@ export function useMemories() {
     return INITIAL_SETTINGS;
   });
 
-  // Asynchronous hydration from IndexedDB on mount
+  // Function to pull latest data from Laravel backend
+  const refreshFromBackend = useCallback(async () => {
+    try {
+      const result = await fetchLaravelTimeline();
+      if (result.success && result.memories) {
+        setIsBackendConnected(true);
+        setMemories(result.memories);
+        await setStorageItem(MEMORIES_STORAGE_KEY, result.memories);
+        await setStorageItem(INITIALIZED_STORAGE_KEY, true);
+
+        if (result.settings) {
+          setSettings(prev => ({ ...prev, ...result.settings }));
+          await setStorageItem(SETTINGS_STORAGE_KEY, result.settings);
+        }
+      } else {
+        const isAlive = await checkLaravelHealth();
+        setIsBackendConnected(isAlive);
+      }
+    } catch (err) {
+      console.warn('Laravel backend sync error:', err);
+      setIsBackendConnected(false);
+    }
+  }, []);
+
+  // Hydration on mount: IndexedDB + Laravel Backend
   useEffect(() => {
     let isCancelled = false;
 
     async function hydrate() {
       try {
+        // 1. Load locally from IndexedDB for instantaneous UI response
         const [isInit, dbMemories, dbSettings] = await Promise.all([
           getStorageItem<boolean | string>(INITIALIZED_STORAGE_KEY),
           getStorageItem<Memory[]>(MEMORIES_STORAGE_KEY),
@@ -86,8 +123,25 @@ export function useMemories() {
         if (dbSettings) {
           setSettings(prev => ({ ...prev, ...dbSettings }));
         }
+
+        // 2. Try fetching the authoritative state from Laravel Backend
+        const laravelData = await fetchLaravelTimeline();
+        if (!isCancelled && laravelData.success && laravelData.memories) {
+          setIsBackendConnected(true);
+          setMemories(laravelData.memories);
+          await setStorageItem(MEMORIES_STORAGE_KEY, laravelData.memories);
+          await setStorageItem(INITIALIZED_STORAGE_KEY, true);
+
+          if (laravelData.settings) {
+            setSettings(prev => ({ ...prev, ...laravelData.settings }));
+            await setStorageItem(SETTINGS_STORAGE_KEY, laravelData.settings);
+          }
+        } else if (!isCancelled) {
+          const alive = await checkLaravelHealth();
+          setIsBackendConnected(alive);
+        }
       } catch (err) {
-        console.error('Failed to hydrate memories from IndexedDB:', err);
+        console.error('Failed to hydrate memories:', err);
       } finally {
         if (!isCancelled) {
           isHydratedRef.current = true;
@@ -103,7 +157,7 @@ export function useMemories() {
     };
   }, []);
 
-  // Firebase Cloud Real-time Subscription (Cross-device sync!)
+  // Optional: Firebase Cloud Real-time Subscription (if user configured Firebase)
   useEffect(() => {
     if (!isFirebaseConfigured()) {
       return;
@@ -132,7 +186,7 @@ export function useMemories() {
     };
   }, []);
 
-  // Save memories and settings locally & cloud whenever changed
+  // Save memories and settings locally & backup whenever changed
   useEffect(() => {
     if (!isHydratedRef.current) return;
 
@@ -164,31 +218,78 @@ export function useMemories() {
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  const addMemory = (memoryData: Omit<Memory, 'id' | 'createdAt' | 'milestoneNumber'>) => {
+  const addMemory = async (memoryData: Omit<Memory, 'id' | 'createdAt' | 'milestoneNumber'>) => {
     const newMemory: Memory = {
       ...memoryData,
       id: 'mem-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
       createdAt: Date.now(),
       milestoneNumber: memories.length + 1,
     };
+
     setMemories(prev => [...prev, newMemory]);
+
+    // Send to Laravel Backend
+    createLaravelMemory(newMemory).then(res => {
+      if (res.success) {
+        setIsBackendConnected(true);
+      }
+    }).catch(err => {
+      console.warn('Could not save memory to Laravel backend:', err);
+    });
+
     return newMemory;
   };
 
-  const updateMemory = (updated: Memory) => {
+  const updateMemory = async (updated: Memory) => {
     setMemories(prev => prev.map(item => (item.id === updated.id ? updated : item)));
+
+    // Send to Laravel Backend
+    updateLaravelMemory(updated).then(res => {
+      if (res.success) {
+        setIsBackendConnected(true);
+      }
+    }).catch(err => {
+      console.warn('Could not update memory in Laravel backend:', err);
+    });
   };
 
-  const deleteMemory = (id: string) => {
+  const deleteMemory = async (id: string) => {
     setMemories(prev => prev.filter(item => item.id !== id));
+
+    // Send to Laravel Backend
+    deleteLaravelMemory(id).then(res => {
+      if (res.success) {
+        setIsBackendConnected(true);
+      }
+    }).catch(err => {
+      console.warn('Could not delete memory in Laravel backend:', err);
+    });
   };
 
-  const clearAllMemories = () => {
+  const clearAllMemories = async () => {
     setMemories([]);
+
+    // Send to Laravel Backend
+    clearAllLaravelMemories().then(res => {
+      if (res.success) {
+        setIsBackendConnected(true);
+      }
+    }).catch(err => {
+      console.warn('Could not clear memories in Laravel backend:', err);
+    });
   };
 
-  const updateSettings = (newSettings: Partial<CoupleSettings>) => {
+  const updateSettings = async (newSettings: Partial<CoupleSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
+
+    // Send to Laravel Backend
+    updateLaravelSettings(newSettings).then(res => {
+      if (res.success) {
+        setIsBackendConnected(true);
+      }
+    }).catch(err => {
+      console.warn('Could not update settings in Laravel backend:', err);
+    });
   };
 
   const resetToDefaults = async () => {
@@ -197,6 +298,15 @@ export function useMemories() {
     await setStorageItem(MEMORIES_STORAGE_KEY, INITIAL_MEMORIES);
     await setStorageItem(SETTINGS_STORAGE_KEY, INITIAL_SETTINGS);
     await setStorageItem(INITIALIZED_STORAGE_KEY, true);
+
+    // Reset Laravel Backend
+    resetLaravelTimeline().then(res => {
+      if (res.success) {
+        setIsBackendConnected(true);
+      }
+    }).catch(err => {
+      console.warn('Could not reset Laravel backend:', err);
+    });
 
     if (isFirebaseConfigured()) {
       await saveTimelineToCloud(INITIAL_MEMORIES, INITIAL_SETTINGS);
@@ -239,6 +349,8 @@ export function useMemories() {
     memories: sortedMemories,
     settings,
     isHydrated,
+    isBackendConnected,
+    refreshFromBackend,
     cloudStatus,
     syncToCloudNow,
     addMemory,

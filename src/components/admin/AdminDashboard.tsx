@@ -5,6 +5,7 @@ import {
   Settings,
   Database,
   Cloud,
+  Server,
   ArrowRight,
   Trash2,
   Edit,
@@ -18,11 +19,14 @@ import type { CoupleSettings, Memory } from '../../types/memory';
 import { MemoryForm } from './MemoryForm';
 import { SettingsForm } from './SettingsForm';
 import { CloudSyncSettings } from './CloudSyncSettings';
+import { LaravelServerSettings } from './LaravelServerSettings';
 
 interface AdminDashboardProps {
   memories: Memory[];
   settings: CoupleSettings;
   cloudStatus?: 'connected' | 'syncing' | 'unconfigured' | 'error';
+  isBackendConnected?: boolean;
+  onRefreshFromBackend?: () => Promise<void>;
   onSyncToCloud?: () => Promise<{ success: boolean; error?: string }>;
   onAddMemory: (memory: Omit<Memory, 'id' | 'createdAt'>) => void;
   onUpdateMemory: (memory: Memory) => void;
@@ -35,12 +39,14 @@ interface AdminDashboardProps {
   onClose: () => void;
 }
 
-type TabType = 'add' | 'list' | 'settings' | 'cloud' | 'backup';
+type TabType = 'add' | 'list' | 'settings' | 'backend' | 'cloud' | 'backup';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   memories,
   settings,
   cloudStatus,
+  isBackendConnected = false,
+  onRefreshFromBackend,
   onSyncToCloud,
   onAddMemory,
   onUpdateMemory,
@@ -171,6 +177,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <Settings className="w-4 h-4" />
             <span>إعدادات الشريكين والهدية</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setEditingMemory(null);
+              setActiveTab('backend');
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
+              activeTab === 'backend'
+                ? 'bg-gradient-to-r from-[#C2415C] to-[#E28290] text-white shadow-xs'
+                : 'bg-white/70 text-[#786C6E] hover:bg-white hover:text-[#272021]'
+            }`}
+          >
+            <Server className="w-4 h-4" />
+            <span>خادم Laravel (PHP)</span>
+            <span
+              className={`w-2 h-2 rounded-full ring-2 ring-white ${
+                isBackendConnected ? 'bg-emerald-500' : 'bg-amber-400'
+              }`}
+            />
           </button>
 
           <button
@@ -437,6 +463,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
             <SettingsForm settings={settings} onSave={onUpdateSettings} />
           </div>
+        )}
+
+        {/* Tab 4: Laravel Backend */}
+        {activeTab === 'backend' && !editingMemory && (
+          <LaravelServerSettings
+            isBackendConnected={!!isBackendConnected}
+            onRefreshFromBackend={onRefreshFromBackend || (async () => {})}
+          />
         )}
 
         {/* Tab 5: Cloud Database Sync */}
