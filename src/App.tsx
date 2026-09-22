@@ -16,6 +16,8 @@ export function App() {
   const {
     memories,
     settings,
+    cloudStatus,
+    syncToCloudNow,
     addMemory,
     updateMemory,
     deleteMemory,
@@ -109,6 +111,8 @@ export function App() {
         <AdminDashboard
           memories={memories}
           settings={settings}
+          cloudStatus={cloudStatus}
+          onSyncToCloud={syncToCloudNow}
           onAddMemory={addMemory}
           onUpdateMemory={updateMemory}
           onDeleteMemory={deleteMemory}

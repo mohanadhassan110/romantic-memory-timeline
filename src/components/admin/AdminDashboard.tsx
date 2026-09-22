@@ -4,6 +4,7 @@ import {
   ListOrdered,
   Settings,
   Database,
+  Cloud,
   ArrowRight,
   Trash2,
   Edit,
@@ -16,10 +17,13 @@ import {
 import type { CoupleSettings, Memory } from '../../types/memory';
 import { MemoryForm } from './MemoryForm';
 import { SettingsForm } from './SettingsForm';
+import { CloudSyncSettings } from './CloudSyncSettings';
 
 interface AdminDashboardProps {
   memories: Memory[];
   settings: CoupleSettings;
+  cloudStatus?: 'connected' | 'syncing' | 'unconfigured' | 'error';
+  onSyncToCloud?: () => Promise<{ success: boolean; error?: string }>;
   onAddMemory: (memory: Omit<Memory, 'id' | 'createdAt'>) => void;
   onUpdateMemory: (memory: Memory) => void;
   onDeleteMemory: (id: string) => void;
@@ -31,11 +35,13 @@ interface AdminDashboardProps {
   onClose: () => void;
 }
 
-type TabType = 'add' | 'list' | 'settings' | 'backup';
+type TabType = 'add' | 'list' | 'settings' | 'cloud' | 'backup';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   memories,
   settings,
+  cloudStatus,
+  onSyncToCloud,
   onAddMemory,
   onUpdateMemory,
   onDeleteMemory,
@@ -165,6 +171,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <Settings className="w-4 h-4" />
             <span>إعدادات الشريكين والهدية</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setEditingMemory(null);
+              setActiveTab('cloud');
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
+              activeTab === 'cloud'
+                ? 'bg-gradient-to-r from-[#C2415C] to-[#E28290] text-white shadow-xs'
+                : 'bg-white/70 text-[#786C6E] hover:bg-white hover:text-[#272021]'
+            }`}
+          >
+            <Cloud className="w-4 h-4" />
+            <span>المزامنة السحابية (Firebase)</span>
+            {cloudStatus === 'connected' && (
+              <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+            )}
           </button>
 
           <button
@@ -415,7 +439,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
 
-        {/* Tab 5: Backup & Restore */}
+        {/* Tab 5: Cloud Database Sync */}
+        {activeTab === 'cloud' && !editingMemory && (
+          <CloudSyncSettings
+            cloudStatus={cloudStatus || 'unconfigured'}
+            onSyncNow={onSyncToCloud || (async () => ({ success: true }))}
+          />
+        )}
+
+        {/* Tab 6: Backup & Restore */}
         {activeTab === 'backup' && !editingMemory && (
           <div className="glass-card rounded-3xl p-6 sm:p-8 border border-[#E28290]/40 shadow-lg max-w-2xl mx-auto space-y-6 text-start">
             <div className="pb-4 border-b border-[#F4DBDE]">

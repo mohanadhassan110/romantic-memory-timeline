@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { INITIAL_MEMORIES, INITIAL_SETTINGS } from '../data/initialMemories';
 import type { CoupleSettings, Memory } from '../types/memory';
 import { getStorageItem, setStorageItem } from '../utils/storage';
+import {
+  isFirebaseConfigured,
+  subscribeToCloudTimeline,
+  saveTimelineToCloud,
+} from '../services/firebase';
 
 const MEMORIES_STORAGE_KEY = 'moments_of_us_memories_ar_v2';
 const SETTINGS_STORAGE_KEY = 'moments_of_us_settings_ar_v2';
@@ -10,6 +15,9 @@ const INITIALIZED_STORAGE_KEY = 'moments_of_us_initialized_v2';
 export function useMemories() {
   const [isHydrated, setIsHydrated] = useState(false);
   const isHydratedRef = useRef(false);
+  const [cloudStatus, setCloudStatus] = useState<
+    'connected' | 'syncing' | 'unconfigured' | 'error'
+  >(() => (isFirebaseConfigured() ? 'connected' : 'unconfigured'));
 
   const [memories, setMemories] = useState<Memory[]>(() => {
     try {
@@ -18,7 +26,6 @@ export function useMemories() {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          // If already initialized (even if empty array), keep parsed
           if (parsed.length > 0 || isInit === 'true') {
             return parsed;
           }
@@ -57,13 +64,10 @@ export function useMemories() {
         if (isCancelled) return;
 
         if (isInit === true || isInit === 'true') {
-          // User has customized memories before
           if (Array.isArray(dbMemories)) {
             setMemories(dbMemories);
           }
         } else {
-          // First visit or not yet marked as initialized
-          // Check if there's data in localStorage
           const localStored = localStorage.getItem(MEMORIES_STORAGE_KEY);
           if (localStored) {
             try {
@@ -74,7 +78,6 @@ export function useMemories() {
               }
             } catch {}
           } else {
-            // Seed initial memories
             await setStorageItem(MEMORIES_STORAGE_KEY, INITIAL_MEMORIES);
           }
           await setStorageItem(INITIALIZED_STORAGE_KEY, true);
@@ -100,23 +103,63 @@ export function useMemories() {
     };
   }, []);
 
-  // Save memories whenever changed (only after initial hydration to prevent race conditions)
+  // Firebase Cloud Real-time Subscription (Cross-device sync!)
+  useEffect(() => {
+    if (!isFirebaseConfigured()) {
+      return;
+    }
+
+    const unsubscribe = subscribeToCloudTimeline(
+      ({ memories: cloudMemories, settings: cloudSettings }) => {
+        if (Array.isArray(cloudMemories)) {
+          setMemories(cloudMemories);
+          setStorageItem(MEMORIES_STORAGE_KEY, cloudMemories);
+          setStorageItem(INITIALIZED_STORAGE_KEY, true);
+        }
+        if (cloudSettings) {
+          setSettings(prev => ({ ...prev, ...cloudSettings }));
+          setStorageItem(SETTINGS_STORAGE_KEY, cloudSettings);
+        }
+        setCloudStatus('connected');
+      },
+      () => {
+        setCloudStatus('error');
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Save memories and settings locally & cloud whenever changed
   useEffect(() => {
     if (!isHydratedRef.current) return;
 
     setStorageItem(MEMORIES_STORAGE_KEY, memories);
-    setStorageItem(INITIALIZED_STORAGE_KEY, true);
-  }, [memories]);
-
-  // Save settings whenever changed
-  useEffect(() => {
-    if (!isHydratedRef.current) return;
-
     setStorageItem(SETTINGS_STORAGE_KEY, settings);
     setStorageItem(INITIALIZED_STORAGE_KEY, true);
-  }, [settings]);
 
-  // Sort memories chronologically (oldest to newest for story timeline)
+    // Sync to cloud if Firebase is configured
+    if (isFirebaseConfigured()) {
+      saveTimelineToCloud(memories, settings).then((res) => {
+        setCloudStatus(res.success ? 'connected' : 'error');
+      });
+    }
+  }, [memories, settings]);
+
+  // Manual trigger to sync current memories to cloud
+  const syncToCloudNow = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!isFirebaseConfigured()) {
+      return { success: false, error: 'لم يتم ربط مشروع Firebase بعد.' };
+    }
+    setCloudStatus('syncing');
+    const res = await saveTimelineToCloud(memories, settings);
+    setCloudStatus(res.success ? 'connected' : 'error');
+    return res;
+  };
+
+  // Sort memories chronologically
   const sortedMemories = [...memories].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
@@ -154,6 +197,10 @@ export function useMemories() {
     await setStorageItem(MEMORIES_STORAGE_KEY, INITIAL_MEMORIES);
     await setStorageItem(SETTINGS_STORAGE_KEY, INITIAL_SETTINGS);
     await setStorageItem(INITIALIZED_STORAGE_KEY, true);
+
+    if (isFirebaseConfigured()) {
+      await saveTimelineToCloud(INITIAL_MEMORIES, INITIAL_SETTINGS);
+    }
   };
 
   const exportData = () => {
@@ -192,6 +239,8 @@ export function useMemories() {
     memories: sortedMemories,
     settings,
     isHydrated,
+    cloudStatus,
+    syncToCloudNow,
     addMemory,
     updateMemory,
     deleteMemory,
