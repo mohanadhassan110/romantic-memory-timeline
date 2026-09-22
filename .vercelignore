@@ -1,0 +1,6 @@
+backend/vendor/
+backend/storage/
+backend/node_modules/
+backend/database/database.sqlite
+node_modules/
+.git/
