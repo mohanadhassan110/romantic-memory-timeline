@@ -1,14 +1,29 @@
 import type { CoupleSettings, Memory } from '../types/memory';
 
 const LARAVEL_API_KEY = 'moments_of_us_laravel_api_url_v1';
-const DEFAULT_LARAVEL_URL = 'http://localhost:8000/api';
+const DEFAULT_LARAVEL_URL = '/api';
 
 export function getLaravelApiUrl(): string {
   try {
     const saved = localStorage.getItem(LARAVEL_API_KEY);
-    if (saved && saved.trim()) return saved.trim();
+    if (saved && saved.trim()) {
+      // If deployed on Vercel and saved url is unreachable localhost, prefer Vercel cloud /api
+      if (
+        typeof window !== 'undefined' &&
+        window.location.hostname.includes('vercel.app') &&
+        saved.includes('localhost')
+      ) {
+        return '/api';
+      }
+      return saved.trim();
+    }
   } catch {
     // ignore
+  }
+
+  // On Vercel or modern web environments, default to integrated cloud API
+  if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+    return '/api';
   }
 
   return (import.meta.env.VITE_LARAVEL_API_URL as string) || DEFAULT_LARAVEL_URL;

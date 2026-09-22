@@ -67,10 +67,10 @@ export const LaravelServerSettings: React.FC<LaravelServerSettingsProps> = ({
         <div>
           <h3 className="text-xl font-bold font-arabic text-[#8C2D3E] flex items-center gap-2">
             <Server className="w-5 h-5 text-[#C2415C]" />
-            <span>خادم وقاعدة بيانات Laravel (PHP Backend)</span>
+            <span>الخادم السحابي وقاعدة البيانات (Cloud Database & API)</span>
           </h3>
           <p className="text-xs text-[#786C6E] mt-1 leading-relaxed">
-            تم بناء الباك اند بالكامل بـ <b>PHP Laravel 12</b> مع قاعدة بيانات SQLite جاهزة وسريعة، ونقاط اتصال REST API.
+            الموقع مربوط الآن بقاعدة بيانات سحابية مركزية <b>Vercel Cloud Database</b> تعمل أونلاين 24/7 لحفظ ومزامنة الذكريات فوراً بين الموبايل واللابتوب!
           </p>
         </div>
 
@@ -79,12 +79,12 @@ export const LaravelServerSettings: React.FC<LaravelServerSettingsProps> = ({
           {isBackendConnected ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>متصل بخادم Laravel 🟢</span>
+              <span>متصل بالسيرفر السحابي أونلاين 🟢</span>
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold">
               <AlertCircle className="w-4 h-4 text-amber-600" />
-              <span>غير متصل (يعمل محلياً) ⚪</span>
+              <span>جاري المزامنة أو يعمل محلياً ⚪</span>
             </span>
           )}
         </div>
