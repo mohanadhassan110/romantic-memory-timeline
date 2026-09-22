@@ -27,7 +27,7 @@ export const SecretLetterModal: React.FC<SecretLetterModalProps> = ({
         origin: { y: 0.6 },
         colors: ['#C2415C', '#E28290', '#D4AF37'],
       });
-    } catch (e) {
+    } catch {
       // silent
     }
   };

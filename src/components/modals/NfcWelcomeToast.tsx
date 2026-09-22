@@ -24,7 +24,7 @@ export const NfcWelcomeToast: React.FC<NfcWelcomeToastProps> = ({ partner2 }) =>
           colors: ['#E28290', '#C2415C', '#D4AF37', '#F6ECC4'],
           disableForReducedMotion: true,
         });
-      } catch (e) {
+      } catch {
         // silent fallback
       }
     }, 900);

@@ -19,6 +19,7 @@ export function App() {
     addMemory,
     updateMemory,
     deleteMemory,
+    clearAllMemories,
     updateSettings,
     resetToDefaults,
     exportData,
@@ -111,6 +112,7 @@ export function App() {
           onAddMemory={addMemory}
           onUpdateMemory={updateMemory}
           onDeleteMemory={deleteMemory}
+          onClearAllMemories={clearAllMemories}
           onUpdateSettings={updateSettings}
           onResetToDefaults={resetToDefaults}
           onExportData={exportData}

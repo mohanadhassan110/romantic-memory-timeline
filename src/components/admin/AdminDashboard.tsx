@@ -23,6 +23,7 @@ interface AdminDashboardProps {
   onAddMemory: (memory: Omit<Memory, 'id' | 'createdAt'>) => void;
   onUpdateMemory: (memory: Memory) => void;
   onDeleteMemory: (id: string) => void;
+  onClearAllMemories?: () => void;
   onUpdateSettings: (newSettings: Partial<CoupleSettings>) => void;
   onResetToDefaults: () => void;
   onExportData: () => void;
@@ -38,6 +39,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onAddMemory,
   onUpdateMemory,
   onDeleteMemory,
+  onClearAllMemories,
   onUpdateSettings,
   onResetToDefaults,
   onExportData,
@@ -47,6 +49,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>('list');
   const [editingMemory, setEditingMemory] = useState<Memory | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isClearingAll, setIsClearingAll] = useState(false);
   const [importStatus, setImportStatus] = useState<{
     success?: boolean;
     message?: string;
@@ -229,73 +232,138 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <h3 className="text-base font-bold font-arabic text-[#272021]">
                 محطات الخط الزمني ({memories.length})
               </h3>
-              <button
-                onClick={() => setActiveTab('add')}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#C2415C] text-white text-xs font-medium hover:bg-[#A82D45] transition-colors shadow-xs"
-              >
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>إضافة ذكرى</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {memories.length > 0 && onClearAllMemories && (
+                  <button
+                    onClick={() => setIsClearingAll(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-200 text-red-600 bg-red-50/50 hover:bg-red-50 text-xs font-medium transition-colors"
+                    title="مسح كل الذكريات الحالية والبدء من الصفر"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>مسح كل الذكريات</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setActiveTab('add')}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#C2415C] text-white text-xs font-medium hover:bg-[#A82D45] transition-colors shadow-xs"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>إضافة ذكرى</span>
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {memories.map((mem, idx) => (
-                <div
-                  key={mem.id}
-                  className="glass-card rounded-2xl p-4 border border-[#F4DBDE] flex flex-col justify-between space-y-3 hover:border-[#E28290] transition-colors text-start"
+            {memories.length === 0 ? (
+              <div className="text-center py-12 px-6 rounded-3xl bg-white border border-[#F4DBDE] shadow-xs">
+                <div className="w-14 h-14 rounded-full bg-[#FBECEE] text-[#C2415C] flex items-center justify-center mx-auto mb-3">
+                  <PlusCircle className="w-7 h-7" />
+                </div>
+                <h4 className="text-base font-bold font-arabic text-[#272021]">
+                  الخط الزمني فارغ حالياً
+                </h4>
+                <p className="text-xs text-[#786C6E] max-w-md mx-auto mt-1.5 mb-5 leading-relaxed">
+                  تم مسح الذكريات بنجاح. يمكنك الآن البدء بإضافة الذكريات والمحطات الخاصة بكما لتظهر على الخط الزمني وتبقى محفوظة بشكل دائم حتى بعد إعادة تحميل الصفحة.
+                </p>
+                <button
+                  onClick={() => setActiveTab('add')}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#C2415C] to-[#E28290] text-white text-xs font-semibold shadow-md hover:from-[#A82D45] hover:to-[#C2415C] transition-all inline-flex items-center gap-2"
                 >
-                  <div className="flex items-start gap-3">
-                    <img
-                      src={mem.imageUrl}
-                      alt={mem.title}
-                      className="w-20 h-20 rounded-xl object-cover shrink-0 border border-[#F4DBDE] bg-[#F4ECE1]"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 text-[11px] text-[#786C6E] mb-1">
-                        <span className="font-bold text-[#8C2D3E]">
-                          #{idx + 1}
-                        </span>
-                        <span>•</span>
-                        <span>{mem.date}</span>
-                        <span>•</span>
-                        <span className="px-1.5 py-0.5 rounded bg-white text-[#272021] border border-[#F4DBDE]">
-                          {mem.category}
-                        </span>
+                  <PlusCircle className="w-4 h-4" />
+                  <span>إضافة أول ذكرى الآن</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {memories.map((mem, idx) => (
+                  <div
+                    key={mem.id}
+                    className="glass-card rounded-2xl p-4 border border-[#F4DBDE] flex flex-col justify-between space-y-3 hover:border-[#E28290] transition-colors text-start"
+                  >
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={mem.imageUrl}
+                        alt={mem.title}
+                        className="w-20 h-20 rounded-xl object-cover shrink-0 border border-[#F4DBDE] bg-[#F4ECE1]"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 text-[11px] text-[#786C6E] mb-1">
+                          <span className="font-bold text-[#8C2D3E]">
+                            #{idx + 1}
+                          </span>
+                          <span>•</span>
+                          <span>{mem.date}</span>
+                          <span>•</span>
+                          <span className="px-1.5 py-0.5 rounded bg-white text-[#272021] border border-[#F4DBDE]">
+                            {mem.category}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold font-arabic text-[#272021] truncate">
+                          <bdi dir="auto">{mem.title}</bdi>
+                        </h4>
+                        <p className="text-xs text-[#786C6E] line-clamp-2 mt-1 font-light leading-relaxed">
+                          <bdi dir="auto">{mem.caption}</bdi>
+                        </p>
                       </div>
-                      <h4 className="text-sm font-bold font-arabic text-[#272021] truncate">
-                        <bdi dir="auto">{mem.title}</bdi>
-                      </h4>
-                      <p className="text-xs text-[#786C6E] line-clamp-2 mt-1 font-light leading-relaxed">
-                        <bdi dir="auto">{mem.caption}</bdi>
-                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-between pt-2 border-t border-[#F4DBDE]/60 text-xs">
+                      <span className="text-[11px] text-[#786C6E]/70 truncate max-w-[150px]">
+                        {mem.location || 'لم يتم تحديد المكان'}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setEditingMemory(mem)}
+                          className="p-1.5 rounded-lg text-[#786C6E] hover:text-[#8C2D3E] hover:bg-[#FBECEE] transition-colors"
+                          title="تعديل الذكرى"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeletingId(mem.id)}
+                          className="p-1.5 rounded-lg text-[#786C6E] hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="حذف الذكرى"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
 
-                  {/* Actions */}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#F4DBDE]/60 text-xs">
-                    <span className="text-[11px] text-[#786C6E]/70 truncate max-w-[150px]">
-                      {mem.location || 'لم يتم تحديد المكان'}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setEditingMemory(mem)}
-                        className="p-1.5 rounded-lg text-[#786C6E] hover:text-[#8C2D3E] hover:bg-[#FBECEE] transition-colors"
-                        title="تعديل الذكرى"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeletingId(mem.id)}
-                        className="p-1.5 rounded-lg text-[#786C6E] hover:text-red-600 hover:bg-red-50 transition-colors"
-                        title="حذف الذكرى"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+            {/* Clear All Confirmation Modal */}
+            {isClearingAll && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+                <div className="bg-[#FFFDF9] rounded-2xl p-6 max-w-sm w-full border border-red-200 text-center shadow-xl">
+                  <AlertTriangle className="w-10 h-10 text-red-500 mx-auto mb-3" />
+                  <h4 className="text-base font-bold font-arabic text-[#272021]">
+                    مسح جميع الذكريات؟
+                  </h4>
+                  <p className="text-xs text-[#786C6E] mt-1 mb-5 leading-relaxed">
+                    سيتم إفراغ الخط الزمني بالكامل لتتمكن من إضافة ذكرياتكم الخاصة من البداية. يمكنك دائماً استعادة الذكريات النموذجية لاحقاً من تبويب النسخ الاحتياطي.
+                  </p>
+                  <div className="flex items-center justify-center gap-3">
+                    <button
+                      onClick={() => setIsClearingAll(false)}
+                      className="px-4 py-2 rounded-xl text-xs font-medium border border-[#F4DBDE] text-[#786C6E] hover:bg-white"
+                    >
+                      إلغاء
+                    </button>
+                    <button
+                      onClick={() => {
+                        onClearAllMemories?.();
+                        setIsClearingAll(false);
+                      }}
+                      className="px-4 py-2 rounded-xl text-xs font-medium bg-red-600 text-white hover:bg-red-700 shadow-sm"
+                    >
+                      نعم، امسح كل الذكريات
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
 
             {/* Delete Confirmation Modal */}
             {deletingId && (
