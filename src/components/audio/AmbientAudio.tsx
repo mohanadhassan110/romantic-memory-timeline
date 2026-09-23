@@ -103,6 +103,7 @@ export const AmbientAudio: React.FC = () => {
         onPause={() => setIsPlaying(false)}
         onEnded={() => setIsPlaying(false)}
       >
+        <source src="/music.m4a" type="audio/mp4" />
         <source src="/music.mp3" type="audio/mpeg" />
       </audio>
 
