@@ -37,11 +37,14 @@ export function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<'timeline' | 'admin'>('timeline');
 
-  // Handle URL hash changes (e.g. #admin)
+  // Handle URL changes (/admin or #admin)
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash;
-      if (hash === '#admin') {
+    const handleUrlRoute = () => {
+      const hash = window.location.hash.toLowerCase();
+      const path = window.location.pathname.toLowerCase();
+      const isAdminRoute = hash === '#admin' || path.endsWith('/admin') || path.includes('/admin/');
+
+      if (isAdminRoute) {
         if (!isAdminAuthenticated) {
           setIsPinModalOpen(true);
         } else {
@@ -52,19 +55,14 @@ export function App() {
       }
     };
 
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    handleUrlRoute();
+    window.addEventListener('hashchange', handleUrlRoute);
+    window.addEventListener('popstate', handleUrlRoute);
+    return () => {
+      window.removeEventListener('hashchange', handleUrlRoute);
+      window.removeEventListener('popstate', handleUrlRoute);
+    };
   }, [isAdminAuthenticated]);
-
-  const handleOpenAdminTrigger = () => {
-    if (isAdminAuthenticated) {
-      setCurrentView('admin');
-      window.location.hash = 'admin';
-    } else {
-      setIsPinModalOpen(true);
-    }
-  };
 
   const handlePinSuccess = () => {
     setIsAdminAuthenticated(true);
@@ -73,11 +71,17 @@ export function App() {
     window.location.hash = 'admin';
   };
 
+  const handleClosePinModal = () => {
+    setIsPinModalOpen(false);
+    setCurrentView('timeline');
+    const cleanPath = window.location.pathname.replace(/\/admin\/?$/i, '') || '/';
+    history.pushState('', document.title, cleanPath);
+  };
+
   const handleCloseAdmin = () => {
     setCurrentView('timeline');
-    if (window.location.hash === '#admin') {
-      history.pushState('', document.title, window.location.pathname + window.location.search);
-    }
+    const cleanPath = window.location.pathname.replace(/\/admin\/?$/i, '') || '/';
+    history.pushState('', document.title, cleanPath);
   };
 
   // Lightbox navigation
@@ -133,7 +137,6 @@ export function App() {
           <Navbar
             settings={settings}
             onOpenLetter={() => setIsLetterOpen(true)}
-            onOpenAdmin={handleOpenAdminTrigger}
           />
 
           {/* Public Gift Experience */}
@@ -152,10 +155,9 @@ export function App() {
             />
           </main>
 
-          {/* Footer with NFC Badge & Discreet Admin Trigger */}
+          {/* Footer with NFC Badge */}
           <Footer
             settings={settings}
-            onOpenAdmin={handleOpenAdminTrigger}
           />
         </div>
       )}
@@ -178,7 +180,7 @@ export function App() {
       {/* Admin Security Gate PIN Modal */}
       <AdminPinModal
         isOpen={isPinModalOpen}
-        onClose={() => setIsPinModalOpen(false)}
+        onClose={handleClosePinModal}
         onSuccess={handlePinSuccess}
         correctPin={settings.adminPin}
       />

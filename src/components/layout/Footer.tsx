@@ -1,15 +1,13 @@
 import React from 'react';
-import { Heart, Key, ArrowUp, Radio } from 'lucide-react';
+import { Heart, ArrowUp, Radio } from 'lucide-react';
 import type { CoupleSettings } from '../../types/memory';
 
 interface FooterProps {
   settings: CoupleSettings;
-  onOpenAdmin: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   settings,
-  onOpenAdmin,
 }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -35,26 +33,14 @@ export const Footer: React.FC<FooterProps> = ({
         </div>
 
         {/* Action Row */}
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex items-center justify-center text-xs">
           {/* Scroll to Top */}
           <button
             onClick={scrollToTop}
-            className="flex items-center gap-1.5 text-[#786C6E] hover:text-[#272021] transition-colors py-1 px-2.5 rounded-md"
+            className="flex items-center gap-1.5 text-[#786C6E] hover:text-[#272021] transition-colors py-1 px-3 rounded-md hover:bg-white/60"
           >
             <ArrowUp className="w-3.5 h-3.5" />
             <span>العودة للأعلى</span>
-          </button>
-
-          <span className="text-[#F4DBDE]">|</span>
-
-          {/* Discreet Admin Link */}
-          <button
-            onClick={onOpenAdmin}
-            className="flex items-center gap-1.5 text-[#786C6E]/60 hover:text-[#8C2D3E] transition-colors py-1 px-2.5 rounded-md group"
-            title="لوحة التحكم: إدارة الذكريات"
-          >
-            <Key className="w-3.5 h-3.5 text-[#786C6E]/50 group-hover:text-[#C2415C] transition-colors" />
-            <span className="group-hover:underline">المفتاح السري للإدارة</span>
           </button>
         </div>
 

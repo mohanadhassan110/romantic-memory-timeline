@@ -1,18 +1,16 @@
 import React from 'react';
-import { Heart, Mail, Shield } from 'lucide-react';
+import { Heart, Mail } from 'lucide-react';
 import { AmbientAudio } from '../audio/AmbientAudio';
 import type { CoupleSettings } from '../../types/memory';
 
 interface NavbarProps {
   settings: CoupleSettings;
   onOpenLetter: () => void;
-  onOpenAdmin: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   settings,
   onOpenLetter,
-  onOpenAdmin,
 }) => {
   return (
     <header className="sticky top-0 z-40 w-full glass-nav transition-all duration-300">
@@ -54,16 +52,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E28290] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#C2415C]"></span>
             </span>
-          </button>
-
-          {/* Admin shortcut button in navbar */}
-          <button
-            onClick={onOpenAdmin}
-            className="p-2 rounded-full text-[#786C6E]/60 hover:text-[#7C2335] hover:bg-[#FBECEE]/60 transition-colors"
-            title="إدارة الذكريات (لوحة التحكم)"
-            aria-label="إعدادات الإدارة"
-          >
-            <Shield className="w-4 h-4" />
           </button>
         </div>
       </div>
