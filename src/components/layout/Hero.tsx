@@ -17,7 +17,7 @@ export const Hero: React.FC<HeroProps> = ({
 }) => {
   const time = useRelationshipTime(settings.anniversaryDate);
 
-  const formattedAnniversary = new Date(settings.anniversaryDate).toLocaleDateString('ar-EG', {
+  const formattedAnniversary = new Date(settings.anniversaryDate).toLocaleDateString('ar-EG-u-nu-latn', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
@@ -108,44 +108,44 @@ export const Hero: React.FC<HeroProps> = ({
             <span>رحلتنا معاً يوماً بيوم</span>
           </div>
 
-          <div className="grid grid-cols-4 gap-2 sm:gap-4 text-center">
+          <div dir="ltr" className="grid grid-cols-4 gap-2 sm:gap-4 text-center">
             {/* Days */}
-            <div className="bg-white/85 rounded-2xl p-2.5 sm:p-4 border border-[#F4DBDE]/70 shadow-xs">
-              <div className="text-2xl sm:text-4xl md:text-5xl font-bold font-arabic text-[#8C2D3E]">
-                {time.days.toLocaleString('ar-EG')}
+            <div className="bg-white/85 hover:bg-white rounded-2xl p-2.5 sm:p-4 border border-[#F4DBDE]/70 shadow-xs transition-colors duration-300">
+              <div className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#C2415C]">
+                {time.days}
               </div>
-              <div className="text-xs text-[#786C6E] mt-1 font-medium">
-                يوم
+              <div className="text-[11px] sm:text-xs text-[#786C6E] mt-1 font-semibold uppercase tracking-wider">
+                Days
               </div>
             </div>
 
             {/* Hours */}
-            <div className="bg-white/85 rounded-2xl p-2.5 sm:p-4 border border-[#F4DBDE]/70 shadow-xs">
-              <div className="text-2xl sm:text-4xl md:text-5xl font-bold font-arabic text-[#A8811E]">
+            <div className="bg-white/85 hover:bg-white rounded-2xl p-2.5 sm:p-4 border border-[#F4DBDE]/70 shadow-xs transition-colors duration-300">
+              <div className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#C2415C]">
                 {String(time.hours).padStart(2, '0')}
               </div>
-              <div className="text-xs text-[#786C6E] mt-1 font-medium">
-                ساعة
+              <div className="text-[11px] sm:text-xs text-[#786C6E] mt-1 font-semibold uppercase tracking-wider">
+                Hours
               </div>
             </div>
 
             {/* Minutes */}
-            <div className="bg-white/85 rounded-2xl p-2.5 sm:p-4 border border-[#F4DBDE]/70 shadow-xs">
-              <div className="text-2xl sm:text-4xl md:text-5xl font-bold font-arabic text-[#C2415C]">
+            <div className="bg-white/85 hover:bg-white rounded-2xl p-2.5 sm:p-4 border border-[#F4DBDE]/70 shadow-xs transition-colors duration-300">
+              <div className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#C2415C]">
                 {String(time.minutes).padStart(2, '0')}
               </div>
-              <div className="text-xs text-[#786C6E] mt-1 font-medium">
-                دقيقة
+              <div className="text-[11px] sm:text-xs text-[#786C6E] mt-1 font-semibold uppercase tracking-wider">
+                Minutes
               </div>
             </div>
 
             {/* Seconds */}
-            <div className="bg-white/85 rounded-2xl p-2.5 sm:p-4 border border-[#F4DBDE]/70 shadow-xs">
-              <div className="text-2xl sm:text-4xl md:text-5xl font-bold font-arabic text-[#D97762]">
+            <div className="bg-white/85 hover:bg-white rounded-2xl p-2.5 sm:p-4 border border-[#F4DBDE]/70 shadow-xs transition-colors duration-300">
+              <div className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#C2415C]">
                 {String(time.seconds).padStart(2, '0')}
               </div>
-              <div className="text-xs text-[#786C6E] mt-1 font-medium">
-                ثانية
+              <div className="text-[11px] sm:text-xs text-[#786C6E] mt-1 font-semibold uppercase tracking-wider">
+                Seconds
               </div>
             </div>
           </div>
