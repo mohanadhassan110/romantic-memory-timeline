@@ -3,67 +3,125 @@ import { Volume2, VolumeX, Music } from 'lucide-react';
 
 export const AmbientAudio: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.5);
+  const [volume, setVolume] = useState(0.6);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hasInteractedRef = useRef(false);
 
-  // Sync volume with audio element
+  // Sync volume safely (iOS Safari throws or ignores setting volume via JS)
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = volume;
+      try {
+        audioRef.current.volume = volume;
+      } catch {
+        // Ignored on mobile devices where volume is hardware-only
+      }
     }
   }, [volume]);
 
-  // Clean up on unmount
+  // Mobile Autoplay on first touch/click anywhere on the screen
   useEffect(() => {
-    const audio = audioRef.current;
+    const handleFirstTouch = () => {
+      if (hasInteractedRef.current) return;
+      hasInteractedRef.current = true;
+
+      const audio = audioRef.current;
+      if (audio && audio.paused) {
+        audio
+          .play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(() => {
+            // Browser autoplay restrictions still in effect, user can click the toggle button
+          });
+      }
+
+      cleanupListeners();
+    };
+
+    const cleanupListeners = () => {
+      window.removeEventListener('touchstart', handleFirstTouch);
+      window.removeEventListener('touchend', handleFirstTouch);
+      window.removeEventListener('click', handleFirstTouch);
+      window.removeEventListener('scroll', handleFirstTouch);
+    };
+
+    window.addEventListener('touchstart', handleFirstTouch, { passive: true });
+    window.addEventListener('touchend', handleFirstTouch, { passive: true });
+    window.addEventListener('click', handleFirstTouch, { passive: true });
+    window.addEventListener('scroll', handleFirstTouch, { passive: true });
+
     return () => {
-      if (audio) {
-        audio.pause();
+      cleanupListeners();
+      if (audioRef.current) {
+        audioRef.current.pause();
       }
     };
   }, []);
 
-  const togglePlayback = async () => {
-    if (!audioRef.current) return;
+  // Direct synchronous user gesture playback (required for iOS Safari & Android Chrome)
+  const togglePlayback = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    hasInteractedRef.current = true;
 
-    if (isPlaying) {
-      audioRef.current.pause();
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (!audio.paused) {
+      audio.pause();
       setIsPlaying(false);
     } else {
-      try {
-        await audioRef.current.play();
-        setIsPlaying(true);
-      } catch (error) {
-        console.error('Audio playback failed:', error);
-        setIsPlaying(false);
+      // Must call .play() synchronously in the event handler for iOS Safari
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch((err) => {
+            console.warn('Playback attempt failed, reloading audio:', err);
+            try {
+              audio.load();
+              audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+            } catch {
+              setIsPlaying(false);
+            }
+          });
       }
     }
   };
 
   return (
-    <div className="flex items-center gap-2">
-      {/* Hidden audio element pointing to the user's music file */}
+    <div className="flex items-center gap-1.5 sm:gap-2">
+      {/* HTML5 Audio optimized for Mobile (iOS Safari & Android) */}
       <audio
         ref={audioRef}
-        src="/music.mp3"
         loop
+        playsInline
         preload="auto"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onEnded={() => setIsPlaying(false)}
-      />
+      >
+        <source src="/music.mp3" type="audio/mpeg" />
+      </audio>
 
       <button
         onClick={togglePlayback}
-        className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 border ${
+        onTouchEnd={(e) => {
+          // Prevent double firing on touch devices while ensuring instant responsiveness
+          togglePlayback(e);
+          e.preventDefault();
+        }}
+        className={`group relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 border select-none cursor-pointer active:scale-95 touch-manipulation min-h-[32px] ${
           isPlaying
-            ? 'bg-[#C2415C]/10 border-[#C2415C]/30 text-[#8B3A4A] shadow-sm'
-            : 'bg-white/60 border-[#F4DBDE] text-[#786C6E] hover:bg-white hover:text-[#8B3A4A]'
+            ? 'bg-[#C2415C]/10 border-[#C2415C]/40 text-[#8B3A4A] shadow-xs'
+            : 'bg-white/80 border-[#F4DBDE] text-[#786C6E] hover:bg-white hover:text-[#8B3A4A]'
         }`}
         title={isPlaying ? 'إيقاف الموسيقى' : 'تشغيل الموسيقى'}
         aria-label="تبديل الموسيقى"
       >
-        <span className="relative flex h-3.5 w-3.5 items-center justify-center">
+        <span className="relative flex h-3.5 w-3.5 items-center justify-center shrink-0">
           {isPlaying ? (
             <span className="flex h-full w-full items-center justify-center space-x-0.5 rtl:space-x-reverse">
               <span
@@ -84,14 +142,14 @@ export const AmbientAudio: React.FC = () => {
           )}
         </span>
 
-        <span className="hidden sm:inline">
+        <span className="text-[11px] sm:text-xs">
           {isPlaying ? 'الموسيقى تعمل' : 'تشغيل الموسيقى'}
         </span>
 
         {isPlaying ? (
-          <Volume2 className="w-3.5 h-3.5 text-[#C2415C]" />
+          <Volume2 className="w-3.5 h-3.5 text-[#C2415C] shrink-0" />
         ) : (
-          <VolumeX className="w-3.5 h-3.5 text-[#786C6E]/60 group-hover:text-[#786C6E]" />
+          <VolumeX className="w-3.5 h-3.5 text-[#786C6E]/60 group-hover:text-[#786C6E] shrink-0" />
         )}
       </button>
 
@@ -103,7 +161,7 @@ export const AmbientAudio: React.FC = () => {
           step="0.05"
           value={volume}
           onChange={(e) => setVolume(parseFloat(e.target.value))}
-          className="w-16 h-1 bg-[#F4DBDE] accent-[#C2415C] rounded-lg cursor-pointer hidden md:inline-block"
+          className="w-14 sm:w-16 h-1 bg-[#F4DBDE] accent-[#C2415C] rounded-lg cursor-pointer hidden md:inline-block"
           title={`مستوى الصوت: ${Math.round(volume * 100)}%`}
         />
       )}
